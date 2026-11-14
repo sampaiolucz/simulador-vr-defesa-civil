@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>Simulador VR — Defesa Civil</title>
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon-192.png" />
+    <style>
+      :root {
+        --bg: #0f172a;
+        --card: #111827;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --brand: #f97316;
+        --blue: #2563eb;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif; }
+      #app canvas { display: block; touch-action: none; }
+      #overlay {
+        position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
+        background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.55), rgba(15, 23, 42, 0.92));
+      }
+      #overlay.hidden, .hidden { display: none !important; }
+      .card {
+        width: 100%; max-width: 560px; background: rgba(17, 24, 39, 0.94); border: 2px solid var(--brand);
+        border-radius: 20px; padding: 28px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+      .tag { display: inline-block; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); font-weight: 700; }
+      h1 { margin: 8px 0 6px; font-size: 28px; line-height: 1.2; }
+      p { color: var(--muted); line-height: 1.5; margin: 8px 0; }
+      .buttons { display: grid; gap: 12px; margin-top: 20px; }
+      button {
+        font: inherit; font-size: 18px; font-weight: 700; padding: 16px 18px; border-radius: 14px; border: 0; cursor: pointer;
+        color: #fff; background: var(--brand);
+      }
+      button.secondary { background: #1f2937; border: 2px solid #374151; }
+      button:disabled { opacity: 0.4; cursor: not-allowed; }
+      #status { min-height: 1.5em; color: var(--text); }
+      .field { display: grid; gap: 6px; margin-top: 14px; font-size: 14px; color: var(--muted); }
+      .field select {
+        font: inherit; font-size: 16px; color: var(--text); background: #1f2937; border: 2px solid #374151;
+        border-radius: 12px; padding: 12px; width: 100%;
+      }
+      #offline { font-size: 13px; margin-top: 14px; }
+      #offline.ok { color: #4ade80; }
+      #help {
+        position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); max-width: calc(100% - 32px);
+        background: rgba(17, 24, 39, 0.85); padding: 8px 14px; border-radius: 10px; font-size: 13px; color: var(--muted);
+        display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center;
+      }
+      #help kbd { background: #374151; color: #fff; border-radius: 4px; padding: 1px 6px; font-family: inherit; }
+      #btn-menu { font-size: 13px; padding: 6px 10px; border-radius: 8px; }
+    </style>
+    <script type="importmap">
+      { "imports": { "three": "./vendor/three.module.min.js" } }
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="overlay">
+      <div class="card">
+        <span class="tag">Defesa Civil de Cubatão</span>
+        <h1>Simulador de Incêndio Residencial</h1>
+        <p>Treinamento interativo em realidade virtual: prevenção, fogo na panela, fuga com fumaça e acionamento do socorro.</p>
+        <p id="status">Verificando suporte a VR…</p>
+        <label class="field">
+          <span>Cenário: Incêndio residencial</span>
+          <select id="phase"></select>
+        </label>
+        <div class="buttons">
+          <button id="btn-vr" disabled>Entrar no VR</button>
+          <button id="btn-desktop" class="secondary">Testar no computador</button>
+          <button id="btn-restart" class="secondary hidden">Reiniciar simulação</button>
+        </div>
+        <p id="offline">Verificando modo offline…</p>
+      </div>
+    </div>
+
+    <div id="help" class="hidden">
+      <span>Arraste para olhar</span>
+      <span>Clique para selecionar</span>
+      <span><kbd>C</kbd> abaixar/levantar</span>
+      <span><kbd>R</kbd> reiniciar</span>
+      <button id="btn-menu" class="secondary">Menu</button>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
