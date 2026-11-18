@@ -1,6 +1,6 @@
 // Service worker: guarda todos os arquivos no aparelho para funcionar sem internet.
 // Ao adicionar arquivos novos, inclua-os na lista ARQUIVOS e aumente a VERSÃO.
-const VERSAO = 'simulador-v3';
+const VERSAO = 'simulador-v4';
 const ARQUIVOS = [
   './',
   './index.html',
@@ -18,6 +18,9 @@ const ARQUIVOS = [
   './js/scenes.js',
   './js/lobby.js',
   './js/logo.js',
+  './js/results.js',
+  './js/training-yard.js',
+  './js/scenario-extintor.js',
   // img/logo-defesa-civil.png (logo oficial, opcional) é guardada automaticamente na 1ª visita
 ];
 

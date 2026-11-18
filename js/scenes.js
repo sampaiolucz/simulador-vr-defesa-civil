@@ -3,6 +3,7 @@
 //  2) importe aqui, preencha `run` e `phases` e marque `available: true`
 //  3) inclua o arquivo novo na lista ARQUIVOS do sw.js
 import { runIncendio, FASES_INCENDIO } from './scenario-incendio.js';
+import { runExtintor, FASES_EXTINTOR } from './scenario-extintor.js';
 
 export const SCENES = [
   {
@@ -15,6 +16,7 @@ export const SCENES = [
     available: true,
     phases: FASES_INCENDIO,
     run: runIncendio,
+    env: 'house',
   },
   {
     id: 'deslizamento',
@@ -43,10 +45,14 @@ export const SCENES = [
   {
     id: 'extintor',
     title: 'Uso do extintor',
-    desc: 'Classes de incêndio e a técnica correta de uso.',
+    desc: 'Inspeção, classes de incêndio, técnica correta e quando não combater.',
+    duration: '6 a 9 min',
     icon: 'extinguisher',
     color: '#dc2626',
-    available: false,
+    available: true,
+    phases: FASES_EXTINTOR,
+    run: runExtintor,
+    env: 'yard',
   },
 ];
 

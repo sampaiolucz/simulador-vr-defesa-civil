@@ -183,8 +183,51 @@ export class Sfx {
     }
   }
 
+  /** Chiado contínuo do extintor enquanto dispara. */
+  setSpray(on) {
+    if (!this.ok) return;
+    if (!this.sprayGain) {
+      const src = this.ctx.createBufferSource();
+      src.buffer = this.noise;
+      src.loop = true;
+      const f = this.ctx.createBiquadFilter();
+      f.type = 'highpass';
+      f.frequency.value = 1800;
+      this.sprayGain = this.ctx.createGain();
+      this.sprayGain.gain.value = 0;
+      src.connect(f).connect(this.sprayGain).connect(this.master);
+      src.start();
+    }
+    this.sprayGain.gain.setTargetAtTime(on ? 0.22 : 0, this.ctx.currentTime, 0.05);
+  }
+
+  /** Descarga elétrica (curto-circuito / choque). */
+  zap() {
+    if (!this.ok) return;
+    const t0 = this.ctx.currentTime;
+    const o = this.ctx.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(120, t0);
+    const lfo = this.ctx.createOscillator();
+    lfo.frequency.value = 37;
+    const lfoGain = this.ctx.createGain();
+    lfoGain.gain.value = 60;
+    lfo.connect(lfoGain).connect(o.frequency);
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(0.25, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9);
+    o.connect(g).connect(this.master);
+    o.start(t0);
+    lfo.start(t0);
+    o.stop(t0 + 1);
+    lfo.stop(t0 + 1);
+    for (let i = 0; i < 6; i++) this.tone(2000 + Math.random() * 3000, 0.04, 'square', 0.08, Math.random() * 0.6);
+  }
+
   stopAll() {
     this.setAlarm(false);
     this.setFire(0);
+    this.setSpray(false);
   }
 }

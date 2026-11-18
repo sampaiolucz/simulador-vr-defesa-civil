@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { makeWaypoint } from './world.js';
 import { createCheckSprite } from './ui.js';
 import { Aborted, clamp, yawTo } from './util.js';
+import { showResults } from './results.js';
 
 export const FASES_INCENDIO = ['Prevenção', 'Fogo na panela', 'Fuga com fumaça', 'Pedir socorro'];
 
@@ -611,45 +612,13 @@ export async function runIncendio(g, run, opts = {}) {
   };
 
   // ------------------------------------------------------------------ Resultado
-  const resultado = async () => {
-    const total = results.reduce((s, r) => s + r.pts, 0);
-    const max = results.reduce((s, r) => s + r.max, 0);
-    const pct = total / max;
-    const msg =
-      pct >= 0.9
-        ? 'Excelente! Você sabe prevenir e agir em um incêndio.'
-        : pct >= 0.7
-          ? 'Bom trabalho! Revise os pontos abaixo.'
-          : pct >= 0.5
-            ? 'Atenção! Alguns erros podem custar caro em uma emergência real.'
-            : 'Vamos treinar mais? Em uma emergência real, cada decisão conta.';
-    const fases = [...new Set(results.map((r) => r.fase))];
-    const items = fases.map((f) => {
-      const rs = results.filter((r) => r.fase === f);
-      const p = rs.reduce((s, r) => s + r.pts, 0);
-      const m = rs.reduce((s, r) => s + r.max, 0);
-      return { text: `${f}: ${p} de ${m} pontos`, ok: p / m >= 0.7 };
-    });
-    const erros = results.filter((r) => !r.ok).map((r) => r.text);
-    sfx.setAlarm(false);
-    ui.setHud([]);
-    const body =
-      msg +
-      (erros.length ? '\n\nPara revisar:\n' + erros.slice(0, 6).map((e) => '• ' + e).join('\n') + (erros.length > 6 ? `\n• e mais ${erros.length - 6}...` : '') : '\n\nVocê acertou tudo!');
-    const fim = await ui.ask(run, {
-      tone: pct >= 0.7 ? 'success' : 'warning',
-      title: `Resultado: ${total} de ${max} pontos`,
-      body,
-      items,
-      width: 1.35,
-      buttons: [
-        { label: 'Jogar novamente', value: 'again' },
-        { label: 'Menu de cenas', value: 'menu' },
-      ],
-    });
-    if (fim === 'menu') g.toMenu();
-    else g.restart();
-  };
+  const resultado = () =>
+    showResults(g, run, results, [
+      'Excelente! Você sabe prevenir e agir em um incêndio.',
+      'Bom trabalho! Revise os pontos abaixo.',
+      'Atenção! Alguns erros podem custar caro em uma emergência real.',
+      'Vamos treinar mais? Em uma emergência real, cada decisão conta.',
+    ]);
 
   // ------------------------------------------------------------------ Execução
   const fases = [fase1, fase2, fase3, fase4];

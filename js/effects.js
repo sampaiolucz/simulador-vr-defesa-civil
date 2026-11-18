@@ -16,13 +16,28 @@ void main() {
 const FIRE_FRAG = /* glsl */ `
 varying float vLife;
 uniform float uOpacity;
+uniform vec3 uC0;
+uniform vec3 uC1;
 void main() {
   vec2 c = gl_PointCoord - 0.5;
   float d = length(c) * 2.0;
   if (d > 1.0) discard;
   float a = pow(1.0 - d, 1.6) * (1.0 - vLife) * uOpacity;
-  vec3 col = mix(vec3(1.0, 0.92, 0.55), vec3(1.0, 0.28, 0.03), smoothstep(0.0, 0.65, vLife));
+  vec3 col = mix(uC0, uC1, smoothstep(0.0, 0.65, vLife));
   gl_FragColor = vec4(col, a);
+}`;
+
+// Pó/gás do extintor: nuvem clara que se abre e some
+const SPRAY_FRAG = /* glsl */ `
+varying float vLife;
+uniform float uOpacity;
+uniform vec3 uC0;
+void main() {
+  vec2 c = gl_PointCoord - 0.5;
+  float d = length(c) * 2.0;
+  if (d > 1.0) discard;
+  float a = pow(1.0 - d, 1.2) * (1.0 - vLife) * 0.55 * uOpacity;
+  gl_FragColor = vec4(uC0, a);
 }`;
 
 const SMOKE_FRAG = /* glsl */ `
@@ -40,7 +55,7 @@ void main() {
 const shared = { uScale: { value: 500 } };
 
 export class Emitter {
-  constructor(kind, { pos, count = 60, radius = 0.15, height = 0.7, size = 0.22, lifespan = [0.5, 1.0], drift = null, wobble = 0.04 }) {
+  constructor(kind, { pos, count = 60, radius = 0.15, height = 0.7, size = 0.22, lifespan = [0.5, 1.0], drift = null, wobble = 0.04, colors = null }) {
     this.kind = kind;
     this.pos = pos.clone();
     this.count = count;
@@ -77,7 +92,12 @@ export class Emitter {
     }
 
     this.mat = new THREE.ShaderMaterial({
-      uniforms: { uScale: shared.uScale, uOpacity: { value: 1 } },
+      uniforms: {
+        uScale: shared.uScale,
+        uOpacity: { value: 1 },
+        uC0: { value: new THREE.Color(...(colors ? colors[0] : [1.0, 0.92, 0.55])) },
+        uC1: { value: new THREE.Color(...(colors ? colors[1] : [1.0, 0.28, 0.03])) },
+      },
       vertexShader: VERT,
       fragmentShader: kind === 'fire' ? FIRE_FRAG : SMOKE_FRAG,
       transparent: true,
@@ -144,6 +164,96 @@ export class Emitter {
   }
 }
 
+/** Jato direcional: partículas saem do bico na direção da mira, abrindo em cone. */
+export class Spray {
+  constructor(color, count = 160) {
+    this.count = count;
+    this.active = false;
+    this.origin = new THREE.Vector3();
+    this.dir = new THREE.Vector3(0, 0, -1);
+    this.intensity = 1; // compatibilidade com Effects.update/light
+    this.pos = this.origin;
+    const geo = new THREE.BufferGeometry();
+    this.posArr = new Float32Array(count * 3);
+    this.lifeArr = new Float32Array(count).fill(1);
+    this.sizeArr = new Float32Array(count);
+    this.vel = new Float32Array(count * 3);
+    geo.setAttribute('position', new THREE.BufferAttribute(this.posArr, 3).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute('aLife', new THREE.BufferAttribute(this.lifeArr, 1).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute('aSize', new THREE.BufferAttribute(this.sizeArr, 1).setUsage(THREE.DynamicDrawUsage));
+    this.geo = geo;
+    this.mat = new THREE.ShaderMaterial({
+      uniforms: { uScale: shared.uScale, uOpacity: { value: 1 }, uC0: { value: new THREE.Color(...color) } },
+      vertexShader: VERT,
+      fragmentShader: SPRAY_FRAG,
+      transparent: true,
+      depthWrite: false,
+    });
+    this.points = new THREE.Points(geo, this.mat);
+    this.points.frustumCulled = false;
+    this.points.renderOrder = 25;
+    this.next = 0;
+    this.speed = 7; // m/s — alcance aproximado de 3,5 a 4 m
+    this.lifespan = 0.55;
+  }
+  set(active, origin, dir) {
+    this.active = active;
+    if (origin) this.origin.copy(origin);
+    if (dir) this.dir.copy(dir).normalize();
+  }
+  setIntensity() {}
+  update(dt) {
+    const spawn = this.active ? Math.ceil(this.count * (dt / this.lifespan)) : 0;
+    const side = new THREE.Vector3();
+    const up = new THREE.Vector3();
+    if (spawn) {
+      side.crossVectors(this.dir, Math.abs(this.dir.y) > 0.9 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0)).normalize();
+      up.crossVectors(side, this.dir).normalize();
+    }
+    for (let s = 0; s < spawn; s++) {
+      const i = this.next;
+      this.next = (this.next + 1) % this.count;
+      const j = i * 3;
+      const a = Math.random() * Math.PI * 2;
+      const spread = Math.random() * 0.13; // abertura do cone
+      const v = this.speed * (0.8 + Math.random() * 0.4);
+      const dx = this.dir.x + (side.x * Math.cos(a) + up.x * Math.sin(a)) * spread;
+      const dy = this.dir.y + (side.y * Math.cos(a) + up.y * Math.sin(a)) * spread;
+      const dz = this.dir.z + (side.z * Math.cos(a) + up.z * Math.sin(a)) * spread;
+      this.vel[j] = dx * v;
+      this.vel[j + 1] = dy * v;
+      this.vel[j + 2] = dz * v;
+      this.posArr[j] = this.origin.x;
+      this.posArr[j + 1] = this.origin.y;
+      this.posArr[j + 2] = this.origin.z;
+      this.lifeArr[i] = Math.random() * 0.05;
+    }
+    for (let i = 0; i < this.count; i++) {
+      if (this.lifeArr[i] >= 1) {
+        this.sizeArr[i] = 0;
+        continue;
+      }
+      const j = i * 3;
+      this.lifeArr[i] = Math.min(1, this.lifeArr[i] + dt / this.lifespan);
+      const drag = 1 - dt * 2.2;
+      this.vel[j] *= drag;
+      this.vel[j + 1] = this.vel[j + 1] * drag - 1.2 * dt;
+      this.vel[j + 2] *= drag;
+      this.posArr[j] += this.vel[j] * dt;
+      this.posArr[j + 1] = Math.max(0.02, this.posArr[j + 1] + this.vel[j + 1] * dt);
+      this.posArr[j + 2] += this.vel[j + 2] * dt;
+      this.sizeArr[i] = 0.05 + this.lifeArr[i] * 0.5;
+    }
+    this.geo.attributes.position.needsUpdate = true;
+    this.geo.attributes.aLife.needsUpdate = true;
+    this.geo.attributes.aSize.needsUpdate = true;
+  }
+  dispose() {
+    this.geo.dispose();
+    this.mat.dispose();
+  }
+}
+
 export class Effects {
   constructor(scene) {
     this.scene = scene;
@@ -158,7 +268,7 @@ export class Effects {
   }
 
   fire(pos, opts = {}) {
-    const e = new Emitter('fire', { pos, count: opts.count ?? 70, radius: opts.radius ?? 0.14, height: opts.height ?? 0.6, size: opts.size ?? 0.22, lifespan: [0.45, 0.95], wobble: 0.05 });
+    const e = new Emitter('fire', { pos, count: opts.count ?? 70, radius: opts.radius ?? 0.14, height: opts.height ?? 0.6, size: opts.size ?? 0.22, lifespan: opts.lifespan ?? [0.45, 0.95], wobble: opts.wobble ?? 0.05, colors: opts.colors });
     this._add(e);
     if (opts.light) this.lightTarget = e;
     return e;
@@ -168,6 +278,30 @@ export class Effects {
     const e = new Emitter('smoke', { pos, count: opts.count ?? 40, radius: opts.radius ?? 0.2, height: opts.height ?? 1.2, size: opts.size ?? 0.45, lifespan: [2.2, 3.6], drift: opts.drift, wobble: 0.15 });
     this._add(e);
     return e;
+  }
+
+  /** Faíscas elétricas (azuladas, rápidas). */
+  sparks(pos, opts = {}) {
+    return this.fire(pos, {
+      count: 40,
+      radius: opts.radius ?? 0.12,
+      height: opts.height ?? 0.35,
+      size: opts.size ?? 0.07,
+      lifespan: [0.12, 0.3],
+      wobble: 0.25,
+      colors: [
+        [0.9, 0.95, 1.0],
+        [0.3, 0.55, 1.0],
+      ],
+    });
+  }
+
+  /** Jato do extintor (pó ou gás). Controlado por spray.set(ativo, origem, direção). */
+  spray(color = [0.95, 0.95, 0.97]) {
+    const s = new Spray(color);
+    this.emitters.push(s);
+    this.group.add(s.points);
+    return s;
   }
 
   _add(e) {

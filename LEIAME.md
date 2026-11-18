@@ -29,8 +29,22 @@ defesa civil (triângulo azul sobre fundo laranja).
 No fim aparece a **pontuação** e os pontos para revisar, o que é bom para puxar conversa com o público.
 No menu de cenas dá para **começar direto de uma fase** quando a palestra tiver pouco tempo.
 
+## Cenário disponível: Uso do extintor (6 a 9 minutos)
+
+Acontece num **campo de treinamento** ao ar livre.
+
+| Fase | O que a pessoa faz | O que aprende |
+|---|---|---|
+| 1. Inspeção | Inspeciona 3 extintores (um descarregado, um com lacre rompido e manutenção vencida, um em ordem) e escolhe qual usar | Manômetro na faixa verde, lacre e pino intactos, manutenção válida, mangueira sem danos. O CO2 não tem manômetro |
+| 2. Classes de incêndio | Escolhe o extintor para uma lixeira (A), uma bandeja com líquido (B) e um painel elétrico (C) | Água só na classe A; **água em líquido espalha o fogo** e **em equipamento energizado dá choque** (a simulação mostra os dois) |
+| 3. Técnica de uso | Pega o extintor, escolhe a posição pela biruta, retira o pino e **dispara de verdade**, segurando a pinça | 2 a 3 m do fogo com o vento pelas costas, mirar na **base** das chamas e fazer **varredura**. A carga dura poucos segundos |
+| 4. Quando não combater | Vê um depósito tomado pelo fogo e decide | Extintor é para **princípio** de incêndio; com fogo no teto: sair e ligar 193; saída às costas; extintor usado vai para recarga |
+
+Na fase 3 o simulador mede quanto do jato foi na base e se houve varredura. Mirando no topo das chamas, a carga
+acaba e o fogo continua, exatamente o erro que queremos mostrar. No computador, dispare segurando o botão do mouse ou a barra de espaço.
+
 > ⚠️ **Antes de usar com o público:** peça para a equipe técnica (Defesa Civil / Bombeiros) revisar os textos.
-> Todos os textos educativos estão em um único arquivo: `js/scenario-incendio.js`.
+> Os textos educativos ficam em `js/scenario-incendio.js` e `js/scenario-extintor.js`.
 
 ---
 
@@ -103,6 +117,9 @@ simulador-vr-defesa-civil/
     ├── lobby.js                menu de cenas em VR (lobby temático)
     ├── logo.js                 logo oficial ou emblema reserva
     ├── scenario-incendio.js    ⭐ roteiro e textos do cenário de incêndio
+    ├── scenario-extintor.js    ⭐ roteiro e textos do cenário do extintor
+    ├── training-yard.js        campo de treinamento e modelos de extintor
+    ├── results.js              tela de resultado (comum a todos os cenários)
     ├── world.js                casa, móveis, portas, área externa
     ├── effects.js              fogo e fumaça
     ├── ui.js                   painéis e avisos dentro do VR
@@ -118,4 +135,3 @@ Alterações em arquivos já existentes chegam sozinhas na próxima vez que o ó
 - Deslizamento de encosta (sinais de alerta: trincas, árvores inclinadas, água barrenta) e evacuação
 - Enchente (o que fazer antes, durante e depois; não atravessar áreas alagadas)
 - Vazamento de produto químico: abrigar-se no local ou evacuar
-- Uso correto do extintor (classes A, B, C e técnica de uso)

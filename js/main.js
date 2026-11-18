@@ -4,11 +4,12 @@ import * as THREE from 'three';
 import { buildWorld } from './world.js';
 import { UI } from './ui.js';
 import { Sfx } from './audio.js';
-import { Effects, Emitter } from './effects.js';
+import { Effects, Emitter, Spray } from './effects.js';
 import { Tweens, Run, Aborted, clamp } from './util.js';
 import { SCENES, sceneById } from './scenes.js';
 import { buildLobby, runLobby, LOBBY_POS } from './lobby.js';
 import { getLogo } from './logo.js';
+import { buildYard } from './training-yard.js';
 
 // ---------------------------------------------------------------- Renderização
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -32,6 +33,7 @@ const world = buildWorld(scene);
 const fx = new Effects(scene);
 const ui = new UI(scene, camera, sfx);
 const lobby = buildLobby(scene);
+const yard = buildYard(scene, getLogo());
 
 // Lista de cenas na tela inicial (disponíveis em destaque)
 const chips = document.getElementById('scene-chips');
@@ -231,11 +233,34 @@ for (let i = 0; i < 2; i++) {
     reticle.visible = false;
   });
   controller.addEventListener('select', () => onSelect(input));
+  // “segurar” (pinça ou gatilho apertado) — usado para disparar o extintor
+  controller.addEventListener('selectstart', () => {
+    input.pressed = true;
+    activeInput = input;
+  });
+  controller.addEventListener('selectend', () => (input.pressed = false));
   inputs.push(input);
 }
 
-const mouse = { kind: 'mouse', ndc: new THREE.Vector2(), active: false, lastSelect: 0, hit: null };
+const mouse = { kind: 'mouse', ndc: new THREE.Vector2(), active: false, lastSelect: 0, hit: null, pressed: false };
 inputs.push(mouse);
+let activeInput = null; // última mão/controle que apertou (é a que “segura” o extintor)
+
+/**
+ * Mira atual para ações contínuas (ex.: jato do extintor).
+ * Retorna { pressed, origin, dir, xr } ou null se não houver entrada disponível.
+ */
+function getAim() {
+  if (renderer.xr.isPresenting) {
+    let inp = activeInput && activeInput.kind === 'xr' && activeInput.source ? activeInput : null;
+    if (!inp) inp = inputs.find((i) => i.kind === 'xr' && i.source) || null;
+    if (!inp) return null;
+    setRayFrom(inp);
+    return { pressed: !!inp.pressed, origin: raycaster.ray.origin.clone(), dir: raycaster.ray.direction.clone(), xr: true };
+  }
+  setRayFrom(mouse);
+  return { pressed: mouse.pressed, origin: raycaster.ray.origin.clone(), dir: raycaster.ray.direction.clone(), xr: false };
+}
 
 function setRayFrom(input) {
   if (input.kind === 'mouse') {
@@ -324,13 +349,15 @@ const canvas = renderer.domElement;
 let drag = null;
 canvas.addEventListener('pointerdown', (e) => {
   if (renderer.xr.isPresenting) return;
+  mouse.ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
   drag = { x: e.clientX, y: e.clientY, moved: false, yaw: DESK.yaw, pitch: DESK.pitch };
+  if (game.aimMode) mouse.pressed = true; // no modo de mira, segurar o botão dispara (não gira a câmera)
   canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove', (e) => {
   mouse.ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
   mouse.active = true;
-  if (!drag) return;
+  if (!drag || game.aimMode) return;
   const dx = e.clientX - drag.x;
   const dy = e.clientY - drag.y;
   if (Math.abs(dx) + Math.abs(dy) > 6) drag.moved = true;
@@ -346,12 +373,19 @@ canvas.addEventListener('pointerup', (e) => {
     onSelect(mouse);
   }
   drag = null;
+  mouse.pressed = false;
+});
+window.addEventListener('keyup', (e) => {
+  if (e.key === ' ') mouse.pressed = false;
 });
 canvas.addEventListener('pointerleave', () => (mouse.active = false));
 window.addEventListener('keydown', (e) => {
   if (renderer.xr.isPresenting) return;
   const k = e.key.toLowerCase();
-  if (k === 'c') {
+  if (k === ' ') {
+    if (game.aimMode) mouse.pressed = true; // espaço também dispara
+    e.preventDefault();
+  } else if (k === 'c') {
     DESK.crouch = !DESK.crouch;
     applyDesk();
   } else if (k === 'r') {
@@ -404,6 +438,10 @@ const game = {
   setSmokeOverlay(v) {
     smokeTarget = v;
   },
+  yard,
+  /** Quando true, segurar o clique/espaço (computador) ou a pinça/gatilho (VR) dispara em vez de girar a câmera. */
+  aimMode: false,
+  getAim,
   /** Recomeça a cena atual (ou o menu). */
   restart: () => go(current),
   /** Volta ao menu de cenas (lobby). */
@@ -425,9 +463,14 @@ async function go(target) {
   world.reset();
   smokeTarget = 0;
   setFade(1); // cada cena começa no escuro e clareia (transição suave)
+  game.aimMode = false;
+  mouse.pressed = false;
   const isLobby = target.scene === 'lobby';
-  lobby.group.visible = isLobby;
-  world.root.visible = !isLobby;
+  const env = isLobby ? 'lobby' : sceneById(target.scene).env || 'house';
+  lobby.group.visible = env === 'lobby';
+  world.root.visible = env === 'house';
+  yard.group.visible = env === 'yard';
+  yard.reset();
   try {
     if (isLobby) {
       const pick = await runLobby(game, run, lobby);
@@ -460,6 +503,7 @@ renderer.setAnimationLoop(() => {
   }
 
   tweens.update(dt);
+  if (yard.group.visible) yard.update(dt, time);
   for (const h of [...frameHooks]) h(dt, time);
   updateInputs();
   updateHands();
@@ -574,7 +618,9 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 {
   const warmFire = new Emitter('fire', { pos: new THREE.Vector3(0, -50, 0), count: 1 });
   const warmSmoke = new Emitter('smoke', { pos: new THREE.Vector3(0, -50, 0), count: 1 });
-  scene.add(warmFire.points, warmSmoke.points);
+  const warmSpray = new Spray([1, 1, 1], 1);
+  scene.add(warmFire.points, warmSmoke.points, warmSpray.points);
+  yard.group.visible = true; // compila também os materiais do campo de treinamento
   fx.light.intensity = 0.001; // garante a variante do shader com luz pontual
   try {
     renderer.compile(scene, camera);
@@ -585,6 +631,7 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 
 // Cena de fundo da tela inicial: o próprio lobby (a casa fica escondida até a cena começar)
 world.root.visible = false;
+yard.group.visible = false;
 player.setPose(LOBBY_POS.x, LOBBY_POS.z, 0);
 lobby.update(0, 0);
 window.__game = game; // para depuração no console
