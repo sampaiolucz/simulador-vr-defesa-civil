@@ -40,11 +40,23 @@ Acontece num **campo de treinamento** ao ar livre.
 | 3. Técnica de uso | Pega o extintor, escolhe a posição pela biruta, retira o pino e **dispara de verdade**, segurando a pinça | 2 a 3 m do fogo com o vento pelas costas, mirar na **base** das chamas e fazer **varredura**. A carga dura poucos segundos |
 | 4. Quando não combater | Vê um depósito tomado pelo fogo e decide | Extintor é para **princípio** de incêndio; com fogo no teto: sair e ligar 193; saída às costas; extintor usado vai para recarga |
 
-Na fase 3 o simulador mede quanto do jato foi na base e se houve varredura. Mirando no topo das chamas, a carga
+## Cenário disponível: Deslizamento de encosta (7 a 10 minutos)
+
+Uma casa num patamar de encosta, colada a um barranco, com escadaria até a rua, a casa da vizinha, um córrego e o
+ponto de apoio (escola). A Serra do Mar aparece ao fundo.
+
+| Fase | O que a pessoa faz | O que aprende |
+|---|---|---|
+| 1. Fatores de risco | Procura 4 riscos (lixo e entulho na encosta, esgoto lançado no terreno, bananeiras, barranco cortado na vertical). Também pode selecionar 3 boas práticas | O que aumenta o risco no dia a dia; canaleta limpa e grama ajudam |
+| 2. Sinais de alerta | Com chuva forte e trovões, procura 6 sinais: trinca na parede, porta emperrando, trinca no chão, muro embarrigado, árvore inclinada, água barrenta saindo do barranco. Ouve estalos e consulta o pluviômetro | Reconhecer que o terreno está se movendo |
+| 3. Hora de sair | Recebe o alerta (celular e sirene), decide sair, leva o kit de emergência, avisa a vizinha e desce até a rua. **O barranco desaba atrás dela.** Depois escolhe entre a rota de fuga sinalizada e o atalho pela beira do córrego | Sair na hora do alerta, sem esperar a chuva parar; nunca ir para os fundos da casa; seguir a rota sinalizada |
+| 4. Depois | Perguntas no ponto de apoio | Não entrar nos escombros (ligar 193/199); só voltar após vistoria da Defesa Civil; cadastrar o CEP no SMS 40199 |
+
+Na fase 3 do extintor, o simulador mede quanto do jato foi na base e se houve varredura. Mirando no topo das chamas, a carga
 acaba e o fogo continua, exatamente o erro que queremos mostrar. No computador, dispare segurando o botão do mouse ou a barra de espaço.
 
 > ⚠️ **Antes de usar com o público:** peça para a equipe técnica (Defesa Civil / Bombeiros) revisar os textos.
-> Os textos educativos ficam em `js/scenario-incendio.js` e `js/scenario-extintor.js`.
+> Os textos educativos ficam em `js/scenario-incendio.js`, `js/scenario-extintor.js` e `js/scenario-deslizamento.js`.
 
 ---
 
@@ -107,6 +119,7 @@ Arraste com o mouse para olhar, clique para selecionar, use **C** para abaixar/l
 simulador-vr-defesa-civil/
 ├── index.html              tela inicial
 ├── iniciar-servidor.bat    abre o simulador no computador
+├── servidor.py             servidor local sem cache (usado pelo .bat)
 ├── sw.js                   cópia offline (service worker)
 ├── manifest.webmanifest    dados do app
 ├── icons/                  ícones
@@ -118,6 +131,8 @@ simulador-vr-defesa-civil/
     ├── logo.js                 logo oficial ou emblema reserva
     ├── scenario-incendio.js    ⭐ roteiro e textos do cenário de incêndio
     ├── scenario-extintor.js    ⭐ roteiro e textos do cenário do extintor
+    ├── scenario-deslizamento.js ⭐ roteiro e textos do cenário de deslizamento
+    ├── hillside.js             encosta, casa, escadaria, ponto de apoio e o deslizamento
     ├── training-yard.js        campo de treinamento e modelos de extintor
     ├── results.js              tela de resultado (comum a todos os cenários)
     ├── world.js                casa, móveis, portas, área externa
@@ -132,6 +147,5 @@ Alterações em arquivos já existentes chegam sozinhas na próxima vez que o ó
 
 ## Ideias para próximos cenários
 
-- Deslizamento de encosta (sinais de alerta: trincas, árvores inclinadas, água barrenta) e evacuação
 - Enchente (o que fazer antes, durante e depois; não atravessar áreas alagadas)
 - Vazamento de produto químico: abrigar-se no local ou evacuar

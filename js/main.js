@@ -10,6 +10,7 @@ import { SCENES, sceneById } from './scenes.js';
 import { buildLobby, runLobby, LOBBY_POS } from './lobby.js';
 import { getLogo } from './logo.js';
 import { buildYard } from './training-yard.js';
+import { buildHillside } from './hillside.js';
 
 // ---------------------------------------------------------------- Renderização
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -34,6 +35,7 @@ const fx = new Effects(scene);
 const ui = new UI(scene, camera, sfx);
 const lobby = buildLobby(scene);
 const yard = buildYard(scene, getLogo());
+const hill = buildHillside(scene, getLogo());
 
 // Lista de cenas na tela inicial (disponíveis em destaque)
 const chips = document.getElementById('scene-chips');
@@ -94,17 +96,18 @@ const player = {
     camera.getWorldDirection(_d);
     return Math.atan2(-_d.x, -_d.z);
   },
-  /** Posiciona a cabeça do jogador em (x, z) olhando na direção yaw. */
-  setPose(x, z, yaw) {
-    this.lastPose = { x, z, yaw };
+  /** Posiciona a cabeça do jogador em (x, z) olhando na direção yaw, com os pés na altura y do terreno. */
+  setPose(x, z, yaw, y = 0) {
+    this.lastPose = { x, z, yaw, y };
     if (!renderer.xr.isPresenting) {
       DESK.yaw = 0;
       DESK.pitch = -0.18; // levemente para baixo: mostra melhor os objetos no projetor
       applyDesk();
       rig.rotation.set(0, yaw, 0);
-      rig.position.set(x, 0, z);
+      rig.position.set(x, y, z);
       rig.updateMatrixWorld(true);
     } else {
+      rig.position.y = y;
       rig.updateMatrixWorld(true);
       rig.rotation.y += yaw - this.headYaw();
       rig.updateMatrixWorld(true);
@@ -429,9 +432,9 @@ const game = {
     const from = fadeMesh.material.opacity;
     return tweens.play({ duration: seconds, update: (t) => setFade(from + (to - from) * t) });
   },
-  async teleport(x, z, yaw) {
+  async teleport(x, z, yaw, y = 0) {
     await game.fade(1, 0.15);
-    player.setPose(x, z, yaw);
+    player.setPose(x, z, yaw, y);
     await game.fade(0, 0.2);
   },
   /** Opacidade da “névoa” na frente dos olhos (0..1). */
@@ -439,6 +442,7 @@ const game = {
     smokeTarget = v;
   },
   yard,
+  hill,
   /** Quando true, segurar o clique/espaço (computador) ou a pinça/gatilho (VR) dispara em vez de girar a câmera. */
   aimMode: false,
   getAim,
@@ -471,6 +475,9 @@ async function go(target) {
   world.root.visible = env === 'house';
   yard.group.visible = env === 'yard';
   yard.reset();
+  hill.group.visible = env === 'hill';
+  hill.reset();
+  scene.fog = null; // cada cenário define o próprio clima
   try {
     if (isLobby) {
       const pick = await runLobby(game, run, lobby);
@@ -497,13 +504,14 @@ renderer.setAnimationLoop(() => {
     reposeFrames--;
     if (reposeFrames === 0) {
       const p = player.lastPose;
-      player.setPose(p.x, p.z, p.yaw);
+      player.setPose(p.x, p.z, p.yaw, p.y);
       ui.recenter();
     }
   }
 
   tweens.update(dt);
   if (yard.group.visible) yard.update(dt, time);
+  if (hill.group.visible) hill.update(dt, time);
   for (const h of [...frameHooks]) h(dt, time);
   updateInputs();
   updateHands();
@@ -557,7 +565,7 @@ btnVR.addEventListener('click', async () => {
     session.addEventListener('end', () => {
       applyDesk();
       const p = player.lastPose;
-      player.setPose(p.x, p.z, p.yaw);
+      player.setPose(p.x, p.z, p.yaw, p.y);
       overlay.classList.remove('hidden');
       btnVR.textContent = 'Voltar ao VR';
       btnRestart.classList.remove('hidden');
@@ -621,6 +629,7 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   const warmSpray = new Spray([1, 1, 1], 1);
   scene.add(warmFire.points, warmSmoke.points, warmSpray.points);
   yard.group.visible = true; // compila também os materiais do campo de treinamento
+  hill.group.visible = true; // e da encosta
   fx.light.intensity = 0.001; // garante a variante do shader com luz pontual
   try {
     renderer.compile(scene, camera);
@@ -632,6 +641,7 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 // Cena de fundo da tela inicial: o próprio lobby (a casa fica escondida até a cena começar)
 world.root.visible = false;
 yard.group.visible = false;
+hill.group.visible = false;
 player.setPose(LOBBY_POS.x, LOBBY_POS.z, 0);
 lobby.update(0, 0);
 window.__game = game; // para depuração no console

@@ -4,6 +4,7 @@
 //  3) inclua o arquivo novo na lista ARQUIVOS do sw.js
 import { runIncendio, FASES_INCENDIO } from './scenario-incendio.js';
 import { runExtintor, FASES_EXTINTOR } from './scenario-extintor.js';
+import { runDeslizamento, FASES_DESLIZAMENTO } from './scenario-deslizamento.js';
 
 export const SCENES = [
   {
@@ -21,10 +22,14 @@ export const SCENES = [
   {
     id: 'deslizamento',
     title: 'Deslizamento de encosta',
-    desc: 'Sinais de alerta em áreas de risco e evacuação segura.',
+    desc: 'Fatores de risco, sinais de alerta, a hora de sair e o que fazer depois.',
+    duration: '7 a 10 min',
     icon: 'landslide',
     color: '#a16207',
-    available: false,
+    available: true,
+    phases: FASES_DESLIZAMENTO,
+    run: runDeslizamento,
+    env: 'hill',
   },
   {
     id: 'enchente',

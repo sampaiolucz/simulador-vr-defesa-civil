@@ -43,12 +43,14 @@ void main() {
 const SMOKE_FRAG = /* glsl */ `
 varying float vLife;
 uniform float uOpacity;
+uniform vec3 uC0;
+uniform vec3 uC1;
 void main() {
   vec2 c = gl_PointCoord - 0.5;
   float d = length(c) * 2.0;
   if (d > 1.0) discard;
   float a = pow(1.0 - d, 1.3) * sin(vLife * 3.14159) * 0.5 * uOpacity;
-  vec3 col = mix(vec3(0.16), vec3(0.3), vLife);
+  vec3 col = mix(uC0, uC1, vLife);
   gl_FragColor = vec4(col, a);
 }`;
 
@@ -95,8 +97,8 @@ export class Emitter {
       uniforms: {
         uScale: shared.uScale,
         uOpacity: { value: 1 },
-        uC0: { value: new THREE.Color(...(colors ? colors[0] : [1.0, 0.92, 0.55])) },
-        uC1: { value: new THREE.Color(...(colors ? colors[1] : [1.0, 0.28, 0.03])) },
+        uC0: { value: new THREE.Color(...(colors ? colors[0] : kind === 'fire' ? [1.0, 0.92, 0.55] : [0.16, 0.16, 0.16])) },
+        uC1: { value: new THREE.Color(...(colors ? colors[1] : kind === 'fire' ? [1.0, 0.28, 0.03] : [0.3, 0.3, 0.3])) },
       },
       vertexShader: VERT,
       fragmentShader: kind === 'fire' ? FIRE_FRAG : SMOKE_FRAG,
@@ -254,6 +256,68 @@ export class Spray {
   }
 }
 
+/** Chuva: riscos finos caindo numa caixa que acompanha o jogador (1 draw call). */
+export class Rain {
+  constructor(centerFn, { count = 900, size = 9, height = 7, speed = 9 } = {}) {
+    this.centerFn = centerFn;
+    this.count = count;
+    this.size = size;
+    this.height = height;
+    this.speed = speed;
+    this.intensity = 1;
+    this.pos = new THREE.Vector3();
+    this.drops = new Float32Array(count * 3); // posição relativa da gota
+    for (let i = 0; i < count; i++) {
+      this.drops[i * 3] = (Math.random() - 0.5) * size;
+      this.drops[i * 3 + 1] = Math.random() * height;
+      this.drops[i * 3 + 2] = (Math.random() - 0.5) * size;
+    }
+    const geo = new THREE.BufferGeometry();
+    this.arr = new Float32Array(count * 6);
+    geo.setAttribute('position', new THREE.BufferAttribute(this.arr, 3).setUsage(THREE.DynamicDrawUsage));
+    this.geo = geo;
+    this.mat = new THREE.LineBasicMaterial({ color: 0xc9d6e3, transparent: true, opacity: 0.45, depthWrite: false, fog: false });
+    this.points = new THREE.LineSegments(geo, this.mat); // nome “points” para reaproveitar o gerenciador
+    this.points.frustumCulled = false;
+    this.points.renderOrder = 30;
+  }
+  setIntensity(v) {
+    this.intensity = v;
+    this.mat.opacity = 0.45 * Math.min(1, v);
+  }
+  update(dt) {
+    const c = this.centerFn();
+    const fall = this.speed * dt;
+    const len = 0.35;
+    const wind = 0.12; // leve inclinação
+    for (let i = 0; i < this.count; i++) {
+      const j = i * 3;
+      this.drops[j + 1] -= fall;
+      if (this.drops[j + 1] < 0) {
+        this.drops[j + 1] += this.height;
+        this.drops[j] = (Math.random() - 0.5) * this.size;
+        this.drops[j + 2] = (Math.random() - 0.5) * this.size;
+      }
+      const x = c.x + this.drops[j];
+      const y = c.y - 2.5 + this.drops[j + 1];
+      const z = c.z + this.drops[j + 2];
+      const k = i * 6;
+      this.arr[k] = x;
+      this.arr[k + 1] = y;
+      this.arr[k + 2] = z;
+      this.arr[k + 3] = x + wind * len;
+      this.arr[k + 4] = y + len;
+      this.arr[k + 5] = z;
+    }
+    this.geo.attributes.position.needsUpdate = true;
+    this.points.visible = this.intensity > 0.01;
+  }
+  dispose() {
+    this.geo.dispose();
+    this.mat.dispose();
+  }
+}
+
 export class Effects {
   constructor(scene) {
     this.scene = scene;
@@ -275,7 +339,7 @@ export class Effects {
   }
 
   smoke(pos, opts = {}) {
-    const e = new Emitter('smoke', { pos, count: opts.count ?? 40, radius: opts.radius ?? 0.2, height: opts.height ?? 1.2, size: opts.size ?? 0.45, lifespan: [2.2, 3.6], drift: opts.drift, wobble: 0.15 });
+    const e = new Emitter('smoke', { pos, count: opts.count ?? 40, radius: opts.radius ?? 0.2, height: opts.height ?? 1.2, size: opts.size ?? 0.45, lifespan: opts.lifespan ?? [2.2, 3.6], drift: opts.drift, wobble: 0.15, colors: opts.colors });
     this._add(e);
     return e;
   }
@@ -292,6 +356,25 @@ export class Effects {
       colors: [
         [0.9, 0.95, 1.0],
         [0.3, 0.55, 1.0],
+      ],
+    });
+  }
+
+  /** Chuva ao redor do ponto retornado por centerFn() (normalmente a cabeça do jogador). */
+  rain(centerFn, opts) {
+    const r = new Rain(centerFn, opts);
+    this.emitters.push(r);
+    this.group.add(r.points);
+    return r;
+  }
+
+  /** Poeira/lama (fumaça marrom), usada no deslizamento. */
+  dust(pos, opts = {}) {
+    return this.smoke(pos, {
+      ...opts,
+      colors: [
+        [0.33, 0.25, 0.16],
+        [0.52, 0.44, 0.33],
       ],
     });
   }

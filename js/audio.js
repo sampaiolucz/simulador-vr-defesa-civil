@@ -225,9 +225,84 @@ export class Sfx {
     for (let i = 0; i < 6; i++) this.tone(2000 + Math.random() * 3000, 0.04, 'square', 0.08, Math.random() * 0.6);
   }
 
+  /** Chuva contínua (0 = sem chuva, 1 = forte). */
+  setRain(level) {
+    if (!this.ok) return;
+    if (!this.rainGain) {
+      const src = this.ctx.createBufferSource();
+      src.buffer = this.noise;
+      src.loop = true;
+      const f = this.ctx.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.value = 2600;
+      this.rainGain = this.ctx.createGain();
+      this.rainGain.gain.value = 0;
+      src.connect(f).connect(this.rainGain).connect(this.master);
+      src.start();
+    }
+    this.rainGain.gain.setTargetAtTime(Math.min(0.3, level * 0.16), this.ctx.currentTime, 0.8);
+  }
+
+  /** Ronco grave da terra se movendo (estalos / deslizamento). */
+  rumble(strength = 1, seconds = 3) {
+    if (!this.ok) return;
+    const t0 = this.ctx.currentTime;
+    const src = this.ctx.createBufferSource();
+    src.buffer = this.noise;
+    src.loop = true;
+    const f = this.ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = 140;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(0.9 * strength, t0 + seconds * 0.25);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + seconds);
+    src.connect(f).connect(g).connect(this.master);
+    src.start(t0);
+    src.stop(t0 + seconds + 0.1);
+    // estalos
+    for (let i = 0; i < 5 * strength; i++) this.tone(80 + Math.random() * 120, 0.12, 'square', 0.12 * strength, Math.random() * seconds * 0.7);
+  }
+
+  /** Sirene de alerta (sobe e desce). */
+  setSiren(on, volume = 0.07) {
+    if (!this.ok) return;
+    if (on && !this.siren) {
+      const t0 = this.ctx.currentTime;
+      const o = this.ctx.createOscillator();
+      o.type = 'sawtooth';
+      o.frequency.value = 700;
+      const lfo = this.ctx.createOscillator();
+      lfo.frequency.value = 0.25;
+      const lg = this.ctx.createGain();
+      lg.gain.value = 350;
+      lfo.connect(lg).connect(o.frequency);
+      const f = this.ctx.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.value = 1800;
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(volume, t0 + 1);
+      o.connect(f).connect(g).connect(this.master);
+      o.start();
+      lfo.start();
+      this.siren = { o, lfo, g };
+    } else if (!on && this.siren) {
+      const { o, lfo, g } = this.siren;
+      g.gain.setTargetAtTime(0, this.ctx.currentTime, 0.3);
+      o.stop(this.ctx.currentTime + 1.5);
+      lfo.stop(this.ctx.currentTime + 1.5);
+      this.siren = null;
+    } else if (on && this.siren) {
+      this.siren.g.gain.setTargetAtTime(volume, this.ctx.currentTime, 0.5);
+    }
+  }
+
   stopAll() {
     this.setAlarm(false);
     this.setFire(0);
     this.setSpray(false);
+    this.setRain(0);
+    this.setSiren(false);
   }
 }

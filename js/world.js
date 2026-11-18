@@ -553,6 +553,12 @@ export function buildWorld(scene) {
       o.smokeLayer.scale.y = H - bottom;
       o.smokeLayer.position.y = (H + bottom) / 2;
     },
+    /** Céu e luz personalizados (ex.: tempo nublado ou tempestade). world.reset() volta ao dia claro. */
+    setSky({ bg, hemi: hemiI, sun: sunI }) {
+      if (bg !== undefined) scene.background = new THREE.Color(bg);
+      if (hemiI !== undefined) hemi.intensity = hemiI;
+      if (sunI !== undefined) sun.intensity = sunI;
+    },
     setGas(on) {
       o.burnerFlame.visible = on;
     },

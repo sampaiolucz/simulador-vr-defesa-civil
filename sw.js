@@ -1,6 +1,6 @@
 // Service worker: guarda todos os arquivos no aparelho para funcionar sem internet.
 // Ao adicionar arquivos novos, inclua-os na lista ARQUIVOS e aumente a VERSÃO.
-const VERSAO = 'simulador-v4';
+const VERSAO = 'simulador-v5';
 const ARQUIVOS = [
   './',
   './index.html',
@@ -21,11 +21,19 @@ const ARQUIVOS = [
   './js/results.js',
   './js/training-yard.js',
   './js/scenario-extintor.js',
+  './js/hillside.js',
+  './js/scenario-deslizamento.js',
   // img/logo-defesa-civil.png (logo oficial, opcional) é guardada automaticamente na 1ª visita
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSAO).then((c) => c.addAll(ARQUIVOS)).then(() => self.skipWaiting()));
+  // cache: 'reload' ignora o cache HTTP do navegador: garante que a cópia offline seja a versão nova
+  e.waitUntil(
+    caches
+      .open(VERSAO)
+      .then((c) => c.addAll(ARQUIVOS.map((u) => new Request(u, { cache: 'reload' }))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {
