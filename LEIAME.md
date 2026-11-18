@@ -3,6 +3,20 @@
 Simulador de emergências em realidade virtual para palestras, feito para o **Meta Quest 2**.
 Funciona com **as mãos** (gesto de pinça) **ou com os controles**, e roda **sem internet** depois de instalado.
 
+## Menu de cenas (lobby)
+
+Ao entrar no VR, a pessoa chega a um **lobby temático da Defesa Civil**: uma plataforma ao entardecer, com a Serra do Mar e
+o polo industrial de Cubatão no horizonte, o painel com a logo e os **cartões de cada cena** em arco.
+Basta apontar e fazer a pinça no cartão para escolher se quer a simulação completa ou começar por uma fase.
+Os cenários marcados como **EM BREVE** aparecem no menu, mas ainda não podem ser abertos.
+No fim de cada cena há os botões **Jogar novamente** e **Menu de cenas**.
+
+### Logo oficial
+
+Salve a logo oficial em `img/logo-defesa-civil.png` (de preferência quadrada e com fundo transparente). Ela aparece sozinha
+na tela inicial, no painel do lobby e no piso. Enquanto o arquivo não existir, aparece o emblema internacional de
+defesa civil (triângulo azul sobre fundo laranja).
+
 ## Cenário disponível: Incêndio residencial (5 a 8 minutos)
 
 | Fase | O que a pessoa faz | O que aprende |
@@ -13,7 +27,7 @@ Funciona com **as mãos** (gesto de pinça) **ou com os controles**, e roda **se
 | 4. Pedir socorro | Escolhe o número e o que dizer | 193 para incêndio; informar o endereço e um ponto de referência; nunca voltar para dentro |
 
 No fim aparece a **pontuação** e os pontos para revisar, o que é bom para puxar conversa com o público.
-Na tela inicial dá para **começar direto de uma fase** quando a palestra tiver pouco tempo.
+No menu de cenas dá para **começar direto de uma fase** quando a palestra tiver pouco tempo.
 
 > ⚠️ **Antes de usar com o público:** peça para a equipe técnica (Defesa Civil / Bombeiros) revisar os textos.
 > Todos os textos educativos estão em um único arquivo: `js/scenario-incendio.js`.
@@ -59,7 +73,7 @@ O rastreamento de mãos funciona melhor em **ambiente bem iluminado**, sem sol d
 ## Usar no computador ou no telão
 
 Dê dois cliques em `iniciar-servidor.bat` e clique em **“Testar no computador”**.
-Arraste com o mouse para olhar, clique para selecionar, use **C** para abaixar/levantar e **R** para reiniciar.
+Arraste com o mouse para olhar, clique para selecionar, use **C** para abaixar/levantar, **R** para reiniciar a cena e **M** para voltar ao menu de cenas.
 É útil para ensaiar a palestra ou projetar enquanto alguém usa o óculos.
 
 ## Dicas para as palestras
@@ -68,7 +82,7 @@ Arraste com o mouse para olhar, clique para selecionar, use **C** para abaixar/l
 - Peça para a pessoa ficar **em pé, num espaço livre de 2 × 2 m**. Na fase de fuga ela vai precisar se agachar de verdade.
 - **Higiene:** tenha lenços higienizadores e, se possível, capas faciais descartáveis.
 - **Espelhar no telão:** pelo próprio Quest (botão Compartilhar → Transmitir) para uma TV/Chromecast, ou para o celular com o app Meta Horizon. A transmissão usa o Wi-Fi local.
-- Se a pessoa tirar o óculos no meio, o menu da tela permite **reiniciar** ou **voltar ao VR**.
+- Se a pessoa tirar o óculos no meio, a tela do navegador mostra **Voltar ao VR** e **Voltar ao menu de cenas**.
 - Para recentralizar a visão, segure o botão Meta/Oculus no controle direito. O simulador reposiciona os painéis sozinho.
 
 ---
@@ -85,6 +99,9 @@ simulador-vr-defesa-civil/
 ├── vendor/three.module.min.js   biblioteca 3D (Three.js r170, licença MIT)
 └── js/
     ├── main.js                 VR, mãos/controles/mouse, loop principal
+    ├── scenes.js               ⭐ catálogo de cenas do menu (título, descrição, disponível/em breve)
+    ├── lobby.js                menu de cenas em VR (lobby temático)
+    ├── logo.js                 logo oficial ou emblema reserva
     ├── scenario-incendio.js    ⭐ roteiro e textos do cenário de incêndio
     ├── world.js                casa, móveis, portas, área externa
     ├── effects.js              fogo e fumaça

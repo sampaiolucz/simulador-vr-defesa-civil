@@ -6,24 +6,9 @@ import { UI } from './ui.js';
 import { Sfx } from './audio.js';
 import { Effects, Emitter } from './effects.js';
 import { Tweens, Run, Aborted, clamp } from './util.js';
-import { runIncendio, FASES_INCENDIO } from './scenario-incendio.js';
-
-// Seletor “Começar pela fase” na tela inicial (para palestras com pouco tempo)
-const phaseSelect = document.getElementById('phase');
-FASES_INCENDIO.forEach((nome, i) => {
-  const opt = document.createElement('option');
-  opt.value = String(i + 1);
-  opt.textContent = i === 0 ? `Simulação completa (começa em: ${nome})` : `Começar pela fase ${i + 1}: ${nome}`;
-  phaseSelect.appendChild(opt);
-});
-try {
-  phaseSelect.value = localStorage.getItem('fase-inicial') || '1';
-} catch (e) {}
-phaseSelect.addEventListener('change', () => {
-  try {
-    localStorage.setItem('fase-inicial', phaseSelect.value);
-  } catch (e) {}
-});
+import { SCENES, sceneById } from './scenes.js';
+import { buildLobby, runLobby, LOBBY_POS } from './lobby.js';
+import { getLogo } from './logo.js';
 
 // ---------------------------------------------------------------- Renderização
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -46,6 +31,23 @@ const tweens = new Tweens();
 const world = buildWorld(scene);
 const fx = new Effects(scene);
 const ui = new UI(scene, camera, sfx);
+const lobby = buildLobby(scene);
+
+// Lista de cenas na tela inicial (disponíveis em destaque)
+const chips = document.getElementById('scene-chips');
+for (const sc of SCENES) {
+  const s = document.createElement('span');
+  s.className = 'chip' + (sc.available ? ' on' : '');
+  s.textContent = sc.available ? sc.title : `${sc.title} · em breve`;
+  chips.appendChild(s);
+}
+
+// Logo (oficial, se existir img/logo-defesa-civil.png; senão o emblema) no lobby e na tela inicial
+getLogo().then((logo) => {
+  lobby.setLogo(logo);
+  const img = document.getElementById('logo');
+  if (img) img.src = logo.toDataURL('image/png');
+});
 
 // Esfera preta para transições e esfera cinza para quando a cabeça está dentro da fumaça
 function overlaySphere(color, order) {
@@ -353,7 +355,9 @@ window.addEventListener('keydown', (e) => {
     DESK.crouch = !DESK.crouch;
     applyDesk();
   } else if (k === 'r') {
-    startScenario();
+    game.restart();
+  } else if (k === 'm') {
+    game.toMenu();
   } else if (k === 'arrowleft') {
     DESK.yaw += 0.15;
     applyDesk();
@@ -400,10 +404,16 @@ const game = {
   setSmokeOverlay(v) {
     smokeTarget = v;
   },
-  restart: () => startScenario(),
+  /** Recomeça a cena atual (ou o menu). */
+  restart: () => go(current),
+  /** Volta ao menu de cenas (lobby). */
+  toMenu: () => go({ scene: 'lobby' }),
 };
 
-async function startScenario() {
+// Fluxo: { scene: 'lobby' } mostra o menu; { scene: '<id>', startPhase } roda um cenário.
+let current = { scene: 'lobby' };
+async function go(target) {
+  current = target;
   if (currentRun) currentRun.abort();
   const run = new Run(frameHooks);
   currentRun = run;
@@ -414,9 +424,18 @@ async function startScenario() {
   sfx.stopAll();
   world.reset();
   smokeTarget = 0;
-  setFade(0);
+  setFade(1); // cada cena começa no escuro e clareia (transição suave)
+  const isLobby = target.scene === 'lobby';
+  lobby.group.visible = isLobby;
+  world.root.visible = !isLobby;
   try {
-    await runIncendio(game, run, { startPhase: Number(phaseSelect.value) || 1 });
+    if (isLobby) {
+      const pick = await runLobby(game, run, lobby);
+      if (!run.aborted) go({ scene: pick.sceneId, startPhase: pick.startPhase });
+    } else {
+      const sc = sceneById(target.scene);
+      await sc.run(game, run, { startPhase: target.startPhase || 1 });
+    }
   } catch (e) {
     if (!(e instanceof Aborted)) console.error(e);
   }
@@ -501,7 +520,7 @@ btnVR.addEventListener('click', async () => {
     });
     if (!started) {
       started = true;
-      startScenario();
+      game.toMenu();
     }
   } catch (e) {
     console.error(e);
@@ -515,13 +534,17 @@ btnDesk.addEventListener('click', () => {
   helpEl.classList.remove('hidden');
   if (!started) {
     started = true;
-    startScenario();
+    game.toMenu();
   }
 });
 
+// “Menu de cenas”: volta ao lobby (útil quando a pessoa tira o óculos no meio de uma cena)
 btnRestart.addEventListener('click', () => {
   sfx.unlock();
-  startScenario();
+  started = true;
+  game.toMenu();
+  overlay.classList.add('hidden');
+  if (!renderer.xr.isPresenting) helpEl.classList.remove('hidden');
 });
 
 document.getElementById('btn-menu').addEventListener('click', () => {
@@ -546,9 +569,6 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   offlineEl.textContent = 'Modo offline indisponível (abra por https:// ou localhost)';
 }
 
-// Cena de fundo da tela inicial
-player.setPose(8.5, 3.5, Math.atan2(8, 3.5)); // olhando para a casa
-
 // Pré-compila os shaders (inclusive fogo e fumaça) para não travar na primeira vez que aparecem.
 // Os emissores de aquecimento ficam escondidos sob o chão e mantêm os programas na memória.
 {
@@ -562,4 +582,9 @@ player.setPose(8.5, 3.5, Math.atan2(8, 3.5)); // olhando para a casa
     console.warn(e);
   }
 }
+
+// Cena de fundo da tela inicial: o próprio lobby (a casa fica escondida até a cena começar)
+world.root.visible = false;
+player.setPose(LOBBY_POS.x, LOBBY_POS.z, 0);
+lobby.update(0, 0);
 window.__game = game; // para depuração no console

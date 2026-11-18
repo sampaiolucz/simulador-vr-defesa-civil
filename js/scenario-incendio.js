@@ -636,15 +636,19 @@ export async function runIncendio(g, run, opts = {}) {
     const body =
       msg +
       (erros.length ? '\n\nPara revisar:\n' + erros.slice(0, 6).map((e) => '• ' + e).join('\n') + (erros.length > 6 ? `\n• e mais ${erros.length - 6}...` : '') : '\n\nVocê acertou tudo!');
-    await ui.ask(run, {
+    const fim = await ui.ask(run, {
       tone: pct >= 0.7 ? 'success' : 'warning',
       title: `Resultado: ${total} de ${max} pontos`,
       body,
       items,
       width: 1.35,
-      buttons: [{ label: 'Jogar novamente' }],
+      buttons: [
+        { label: 'Jogar novamente', value: 'again' },
+        { label: 'Menu de cenas', value: 'menu' },
+      ],
     });
-    g.restart();
+    if (fim === 'menu') g.toMenu();
+    else g.restart();
   };
 
   // ------------------------------------------------------------------ Execução

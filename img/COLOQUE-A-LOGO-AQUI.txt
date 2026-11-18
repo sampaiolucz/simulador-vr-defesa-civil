@@ -1,0 +1,8 @@
+Salve a logo oficial da Defesa Civil nesta pasta com o nome exato:
+
+    logo-defesa-civil.png
+
+Recomendado: imagem quadrada, fundo transparente, 512x512 pixels ou maior.
+Ela aparece automaticamente na tela inicial, no painel do menu em VR e no piso do lobby.
+Enquanto o arquivo não existir, o simulador usa o emblema internacional de defesa civil
+(triângulo azul sobre fundo laranja).
