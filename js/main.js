@@ -11,6 +11,7 @@ import { buildLobby, runLobby, LOBBY_POS } from './lobby.js';
 import { getLogo } from './logo.js';
 import { buildYard } from './training-yard.js';
 import { buildHillside } from './hillside.js';
+import { buildFloodProps } from './flood-props.js';
 
 // ---------------------------------------------------------------- Renderização
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -36,6 +37,7 @@ const ui = new UI(scene, camera, sfx);
 const lobby = buildLobby(scene);
 const yard = buildYard(scene, getLogo());
 const hill = buildHillside(scene, getLogo());
+const flood = buildFloodProps(world);
 
 // Lista de cenas na tela inicial (disponíveis em destaque)
 const chips = document.getElementById('scene-chips');
@@ -443,6 +445,7 @@ const game = {
   },
   yard,
   hill,
+  flood,
   /** Quando true, segurar o clique/espaço (computador) ou a pinça/gatilho (VR) dispara em vez de girar a câmera. */
   aimMode: false,
   getAim,
@@ -477,6 +480,7 @@ async function go(target) {
   yard.reset();
   hill.group.visible = env === 'hill';
   hill.reset();
+  flood.reset(); // o cenário de enchente liga os próprios elementos
   scene.fog = null; // cada cenário define o próprio clima
   try {
     if (isLobby) {
@@ -495,8 +499,10 @@ async function go(target) {
 const clock = new THREE.Clock();
 let time = 0;
 let reposeFrames = 0;
-renderer.setAnimationLoop(() => {
-  const dt = Math.min(clock.getDelta(), 0.05);
+renderer.setAnimationLoop(() => tick(Math.min(clock.getDelta(), 0.05)));
+// game.tick(dt) avança a simulação manualmente (usado só em testes automatizados)
+game.tick = (dt = 0.05) => tick(dt);
+function tick(dt) {
   time += dt;
 
   // Ao entrar no VR (ou recentralizar), reposiciona o jogador quando a pose da cabeça já existe
@@ -521,7 +527,7 @@ renderer.setAnimationLoop(() => {
   smokeMesh.material.opacity = so;
   smokeMesh.visible = so > 0.01;
   renderer.render(scene, camera);
-});
+}
 
 // ---------------------------------------------------------------- Tela inicial / sessão VR
 const overlay = document.getElementById('overlay');
@@ -630,6 +636,8 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   scene.add(warmFire.points, warmSmoke.points, warmSpray.points);
   yard.group.visible = true; // compila também os materiais do campo de treinamento
   hill.group.visible = true; // e da encosta
+  flood.group.visible = true; // e da enchente
+  flood.o.water.visible = true;
   fx.light.intensity = 0.001; // garante a variante do shader com luz pontual
   try {
     renderer.compile(scene, camera);
@@ -642,6 +650,7 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 world.root.visible = false;
 yard.group.visible = false;
 hill.group.visible = false;
+flood.reset();
 player.setPose(LOBBY_POS.x, LOBBY_POS.z, 0);
 lobby.update(0, 0);
 window.__game = game; // para depuração no console

@@ -196,6 +196,7 @@ export function buildWorld(scene) {
   sign.position.set(11.6, 0, 2.6);
   sign.rotation.y = -Math.PI / 2;
   root.add(sign);
+  o.meetingSign = sign;
 
   // ---------- Pisos ----------
   const kitchenFloor = new THREE.Mesh(new THREE.PlaneGeometry(5, 4), new THREE.MeshLambertMaterial({ map: (() => { const t = tileTexture('#e8e4dc', '#cfc8bb'); t.repeat.set(2.5, 2); return t; })() }));
@@ -580,6 +581,7 @@ export function buildWorld(scene) {
       o.jug.position.copy(o.jugHome);
       o.jug.rotation.set(0, 0, 0);
       o.bag.visible = true;
+      o.meetingSign.visible = true;
       o.hotGlow.visible = false;
       o.alarmLed.material.color.set(0x330000);
       world.setGas(false);

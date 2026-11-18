@@ -5,6 +5,7 @@
 import { runIncendio, FASES_INCENDIO } from './scenario-incendio.js';
 import { runExtintor, FASES_EXTINTOR } from './scenario-extintor.js';
 import { runDeslizamento, FASES_DESLIZAMENTO } from './scenario-deslizamento.js';
+import { runEnchente, FASES_ENCHENTE } from './scenario-enchente.js';
 
 export const SCENES = [
   {
@@ -34,10 +35,14 @@ export const SCENES = [
   {
     id: 'enchente',
     title: 'Enchente e alagamento',
-    desc: 'O que fazer antes, durante e depois de uma enchente.',
+    desc: 'Preparar a casa, agir quando a água sobe, sair com segurança e cuidados depois.',
+    duration: '7 a 10 min',
     icon: 'flood',
     color: '#0284c7',
-    available: false,
+    available: true,
+    phases: FASES_ENCHENTE,
+    run: runEnchente,
+    env: 'house',
   },
   {
     id: 'quimico',

@@ -52,11 +52,22 @@ ponto de apoio (escola). A Serra do Mar aparece ao fundo.
 | 3. Hora de sair | Recebe o alerta (celular e sirene), decide sair, leva o kit de emergência, avisa a vizinha e desce até a rua. **O barranco desaba atrás dela.** Depois escolhe entre a rota de fuga sinalizada e o atalho pela beira do córrego | Sair na hora do alerta, sem esperar a chuva parar; nunca ir para os fundos da casa; seguir a rota sinalizada |
 | 4. Depois | Perguntas no ponto de apoio | Não entrar nos escombros (ligar 193/199); só voltar após vistoria da Defesa Civil; cadastrar o CEP no SMS 40199 |
 
+## Cenário disponível: Enchente e alagamento (7 a 10 minutos)
+
+Acontece na mesma casa do cenário de incêndio, agora com a água entrando e a rua alagada.
+
+| Fase | O que a pessoa faz | O que aprende |
+|---|---|---|
+| 1. Preparação | Guarda os documentos no alto, tira a extensão do chão, prepara o kit de emergência e encontra o bueiro entupido de lixo na calçada | Prevenção antes da época de chuvas; lixo na rua entope a drenagem |
+| 2. A água está subindo | Com a água entrando (o nível aparece em centímetros), desliga o quadro de luz, fecha o gás, pega o kit e decide sair | **Desligar a energia só com os pés secos** (com água no chão, o simulador mostra o risco de choque); sair quando a Defesa Civil orientar |
+| 3. Na rua alagada | Encontra 2 perigos escondidos (fio caído soltando faíscas e redemoinho de bueiro destampado), responde sobre o carro e escolhe o caminho | **15 cm de água em movimento derrubam um adulto; 30 cm arrastam um carro**; nunca atravessar alagamentos; seguir a rota sinalizada |
+| 4. Depois da enchente | Na casa com lama e marca d'água nas paredes: limpeza com proteção, alimentos, água para beber e quadro de luz; pergunta sobre leptospirose | Botas e luvas, água sanitária, descartar alimentos molhados, eletricista antes de religar, procurar o posto de saúde com sintomas |
+
 Na fase 3 do extintor, o simulador mede quanto do jato foi na base e se houve varredura. Mirando no topo das chamas, a carga
 acaba e o fogo continua, exatamente o erro que queremos mostrar. No computador, dispare segurando o botão do mouse ou a barra de espaço.
 
 > ⚠️ **Antes de usar com o público:** peça para a equipe técnica (Defesa Civil / Bombeiros) revisar os textos.
-> Os textos educativos ficam em `js/scenario-incendio.js`, `js/scenario-extintor.js` e `js/scenario-deslizamento.js`.
+> Os textos educativos ficam em `js/scenario-incendio.js`, `js/scenario-extintor.js`, `js/scenario-deslizamento.js` e `js/scenario-enchente.js`.
 
 ---
 
@@ -133,6 +144,8 @@ simulador-vr-defesa-civil/
     ├── scenario-extintor.js    ⭐ roteiro e textos do cenário do extintor
     ├── scenario-deslizamento.js ⭐ roteiro e textos do cenário de deslizamento
     ├── hillside.js             encosta, casa, escadaria, ponto de apoio e o deslizamento
+    ├── scenario-enchente.js    ⭐ roteiro e textos do cenário de enchente
+    ├── flood-props.js          água, lama, quadro de luz, carro, fio caído e redemoinho
     ├── training-yard.js        campo de treinamento e modelos de extintor
     ├── results.js              tela de resultado (comum a todos os cenários)
     ├── world.js                casa, móveis, portas, área externa
@@ -147,5 +160,4 @@ Alterações em arquivos já existentes chegam sozinhas na próxima vez que o ó
 
 ## Ideias para próximos cenários
 
-- Enchente (o que fazer antes, durante e depois; não atravessar áreas alagadas)
 - Vazamento de produto químico: abrigar-se no local ou evacuar
