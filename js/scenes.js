@@ -6,6 +6,7 @@ import { runIncendio, FASES_INCENDIO } from './scenario-incendio.js';
 import { runExtintor, FASES_EXTINTOR } from './scenario-extintor.js';
 import { runDeslizamento, FASES_DESLIZAMENTO } from './scenario-deslizamento.js';
 import { runEnchente, FASES_ENCHENTE } from './scenario-enchente.js';
+import { runQuimico, FASES_QUIMICO } from './scenario-quimico.js';
 
 export const SCENES = [
   {
@@ -47,10 +48,14 @@ export const SCENES = [
   {
     id: 'quimico',
     title: 'Vazamento químico',
-    desc: 'Abrigar-se no local ou evacuar? Aprenda a decidir.',
+    desc: 'Identificar o produto, afastar-se, abrigar-se em casa e evacuar com segurança.',
+    duration: '7 a 10 min',
     icon: 'chemical',
     color: '#65a30d',
-    available: false,
+    available: true,
+    phases: FASES_QUIMICO,
+    run: runQuimico,
+    env: 'house',
   },
   {
     id: 'extintor',

@@ -63,11 +63,22 @@ Acontece na mesma casa do cenário de incêndio, agora com a água entrando e a 
 | 3. Na rua alagada | Encontra 2 perigos escondidos (fio caído soltando faíscas e redemoinho de bueiro destampado), responde sobre o carro e escolhe o caminho | **15 cm de água em movimento derrubam um adulto; 30 cm arrastam um carro**; nunca atravessar alagamentos; seguir a rota sinalizada |
 | 4. Depois da enchente | Na casa com lama e marca d'água nas paredes: limpeza com proteção, alimentos, água para beber e quadro de luz; pergunta sobre leptospirose | Botas e luvas, água sanitária, descartar alimentos molhados, eletricista antes de religar, procurar o posto de saúde com sintomas |
 
+## Cenário disponível: Vazamento químico (7 a 10 minutos)
+
+Um caminhão-tanque tomba na rua em frente à casa e vaza **amônia** (painel de segurança 268 / 1005).
+
+| Fase | O que a pessoa faz | O que aprende |
+|---|---|---|
+| 1. Identificar e se afastar | Encontra a placa laranja e o rótulo de risco, decide o que fazer e escolhe para onde ir (a biruta e a nuvem mostram o vento) | Ler o painel de segurança; não chegar perto nem filmar; ficar do lado de onde vem o vento; informar ao 193 o local e os números da placa |
+| 2. Abrigar-se | Com o alerta, fecha a porta e a janela, desliga o ventilador, veda a fresta com pano molhado e vai para o quarto com o rádio | Como transformar a casa em abrigo; **não ir buscar os filhos na escola** (a escola tem plano de emergência) |
+| 3. Evacuação | Protege a respiração com pano úmido e escolhe o caminho | Nunca sair no sentido da nuvem nem passar perto do vazamento; seguir a rota de fuga |
+| 4. Depois | Perguntas no ponto de encontro | Lavar olhos e pele com água corrente e procurar atendimento; **sem cheiro não quer dizer seguro**; seguir só as orientações oficiais |
+
 Na fase 3 do extintor, o simulador mede quanto do jato foi na base e se houve varredura. Mirando no topo das chamas, a carga
 acaba e o fogo continua, exatamente o erro que queremos mostrar. No computador, dispare segurando o botão do mouse ou a barra de espaço.
 
 > ⚠️ **Antes de usar com o público:** peça para a equipe técnica (Defesa Civil / Bombeiros) revisar os textos.
-> Os textos educativos ficam em `js/scenario-incendio.js`, `js/scenario-extintor.js`, `js/scenario-deslizamento.js` e `js/scenario-enchente.js`.
+> Os textos educativos ficam em `js/scenario-incendio.js`, `js/scenario-extintor.js`, `js/scenario-deslizamento.js`, `js/scenario-enchente.js` e `js/scenario-quimico.js`.
 
 ---
 
@@ -146,6 +157,8 @@ simulador-vr-defesa-civil/
     ├── hillside.js             encosta, casa, escadaria, ponto de apoio e o deslizamento
     ├── scenario-enchente.js    ⭐ roteiro e textos do cenário de enchente
     ├── flood-props.js          água, lama, quadro de luz, carro, fio caído e redemoinho
+    ├── scenario-quimico.js     ⭐ roteiro e textos do cenário de vazamento químico
+    ├── chem-props.js           caminhão-tanque, placa laranja, rótulo, biruta e itens do abrigo
     ├── training-yard.js        campo de treinamento e modelos de extintor
     ├── results.js              tela de resultado (comum a todos os cenários)
     ├── world.js                casa, móveis, portas, área externa
@@ -160,4 +173,6 @@ Alterações em arquivos já existentes chegam sozinhas na próxima vez que o ó
 
 ## Ideias para próximos cenários
 
-- Vazamento de produto químico: abrigar-se no local ou evacuar
+- Primeiros socorros básicos (queimaduras, engasgo)
+- Vendaval e queda de árvores
+- Preparação familiar: montar o plano e o kit de emergência

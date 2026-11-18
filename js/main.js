@@ -12,6 +12,7 @@ import { getLogo } from './logo.js';
 import { buildYard } from './training-yard.js';
 import { buildHillside } from './hillside.js';
 import { buildFloodProps } from './flood-props.js';
+import { buildChemProps } from './chem-props.js';
 
 // ---------------------------------------------------------------- Renderização
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -38,6 +39,7 @@ const lobby = buildLobby(scene);
 const yard = buildYard(scene, getLogo());
 const hill = buildHillside(scene, getLogo());
 const flood = buildFloodProps(world);
+const chem = buildChemProps(world);
 
 // Lista de cenas na tela inicial (disponíveis em destaque)
 const chips = document.getElementById('scene-chips');
@@ -446,6 +448,7 @@ const game = {
   yard,
   hill,
   flood,
+  chem,
   /** Quando true, segurar o clique/espaço (computador) ou a pinça/gatilho (VR) dispara em vez de girar a câmera. */
   aimMode: false,
   getAim,
@@ -480,7 +483,8 @@ async function go(target) {
   yard.reset();
   hill.group.visible = env === 'hill';
   hill.reset();
-  flood.reset(); // o cenário de enchente liga os próprios elementos
+  flood.reset(); // os cenários de enchente e vazamento ligam os próprios elementos
+  chem.reset();
   scene.fog = null; // cada cenário define o próprio clima
   try {
     if (isLobby) {
@@ -638,6 +642,7 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   hill.group.visible = true; // e da encosta
   flood.group.visible = true; // e da enchente
   flood.o.water.visible = true;
+  chem.group.visible = true; // e do vazamento
   fx.light.intensity = 0.001; // garante a variante do shader com luz pontual
   try {
     renderer.compile(scene, camera);
@@ -651,6 +656,7 @@ world.root.visible = false;
 yard.group.visible = false;
 hill.group.visible = false;
 flood.reset();
+chem.reset();
 player.setPose(LOBBY_POS.x, LOBBY_POS.z, 0);
 lobby.update(0, 0);
 window.__game = game; // para depuração no console
